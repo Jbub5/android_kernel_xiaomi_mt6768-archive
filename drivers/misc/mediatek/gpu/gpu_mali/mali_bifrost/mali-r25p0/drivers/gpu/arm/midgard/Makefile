@@ -20,6 +20,7 @@
 
 KERNEL_SRC ?= /lib/modules/$(shell uname -r)/build
 KDIR ?= $(KERNEL_SRC)
+M ?= $(shell pwd)
 
 ifeq ($(KDIR),)
     $(error Must specify KDIR to point to the kernel to target))
@@ -31,6 +32,15 @@ endif
 # Dependency resolution is done through statements as Kconfig
 # is not supported for out-of-tree builds.
 #
+CONFIGS :=
+ifeq ($(MALI_KCONFIG_EXT_PREFIX),)
+    CONFIG_MALI_MIDGARD ?= m
+    ifeq ($(CONFIG_MALI_MIDGARD),m)
+        CONFIG_MALI_PLATFORM_NAME ?= "devicetree"
+        CONFIG_MALI_TRACE_POWER_GPU_WORK_PERIOD ?= y
+        CONFIG_MALI_GATOR_SUPPORT ?= y
+        CONFIG_MALI_ARBITRATION ?= n
+        CONFIG_MALI_PARTITION_MANAGER ?= n
 
 CONFIG_MALI_MIDGARD ?= m
 ifeq ($(CONFIG_MALI_MIDGARD),m)
@@ -69,120 +79,153 @@ ifeq ($(CONFIG_MALI_MIDGARD),m)
             CONFIG_MALI_REAL_HW = n
             CONFIG_MALI_NO_MALI_DEFAULT_GPU ?= "tMIx"
 
+        ifeq ($(CONFIG_MALI_MIDGARD_DVFS),y)
+            # Prevent misuse when CONFIG_MALI_MIDGARD_DVFS=y
+            CONFIG_MALI_DEVFREQ ?= n
         else
-            # Prevent misuse when CONFIG_MALI_NO_MALI=n
-            CONFIG_MALI_REAL_HW = y
-            CONFIG_MALI_ERROR_INJECT = n
+            CONFIG_MALI_DEVFREQ ?= y
         endif
 
-
-        ifeq ($(CONFIG_MALI_HW_ERRATA_1485982_NOT_AFFECTED), y)
-            # Prevent misuse when CONFIG_MALI_HW_ERRATA_1485982_NOT_AFFECTED=y
-            CONFIG_MALI_HW_ERRATA_1485982_USE_CLOCK_ALTERNATIVE = n
+        ifeq ($(CONFIG_MALI_DMA_BUF_MAP_ON_DEMAND), y)
+            # Prevent misuse when CONFIG_MALI_DMA_BUF_MAP_ON_DEMAND=y
+            CONFIG_MALI_DMA_BUF_LEGACY_COMPAT = n
         endif
 
-        ifeq ($(CONFIG_MALI_DEBUG), y)
-            CONFIG_MALI_MIDGARD_ENABLE_TRACE ?= y
-            CONFIG_MALI_SYSTEM_TRACE ?= y
+        ifeq ($(CONFIG_MALI_CSF_SUPPORT), y)
+            CONFIG_MALI_CORESIGHT ?= n
+        endif
 
-            ifeq ($(CONFIG_SYNC_FILE), y)
-                CONFIG_MALI_FENCE_DEBUG ?= y
+        #
+        # Expert/Debug/Test released configurations
+        #
+        ifeq ($(CONFIG_MALI_EXPERT), y)
+            ifeq ($(CONFIG_MALI_NO_MALI), y)
+                CONFIG_MALI_REAL_HW = n
+                CONFIG_MALI_NO_MALI_DEFAULT_GPU ?= "tMIx"
+
             else
+                # Prevent misuse when CONFIG_MALI_NO_MALI=n
+                CONFIG_MALI_REAL_HW = y
+                CONFIG_MALI_ERROR_INJECT = n
+            endif
+
+
+            ifeq ($(CONFIG_MALI_HW_ERRATA_1485982_NOT_AFFECTED), y)
+                # Prevent misuse when CONFIG_MALI_HW_ERRATA_1485982_NOT_AFFECTED=y
+                CONFIG_MALI_HW_ERRATA_1485982_USE_CLOCK_ALTERNATIVE = n
+            endif
+
+            ifeq ($(CONFIG_MALI_DEBUG), y)
+                CONFIG_MALI_MIDGARD_ENABLE_TRACE ?= y
+                CONFIG_MALI_SYSTEM_TRACE ?= y
+
+                ifeq ($(CONFIG_SYNC_FILE), y)
+                    CONFIG_MALI_FENCE_DEBUG ?= y
+                else
+                    CONFIG_MALI_FENCE_DEBUG = n
+                endif
+            else
+                # Prevent misuse when CONFIG_MALI_DEBUG=n
+                CONFIG_MALI_MIDGARD_ENABLE_TRACE = n
+                CONFIG_MALI_SYSTEM_TRACE = n
                 CONFIG_MALI_FENCE_DEBUG = n
             endif
         else
-            # Prevent misuse when CONFIG_MALI_DEBUG=n
+            # Prevent misuse when CONFIG_MALI_EXPERT=n
+            CONFIG_MALI_CORESTACK = n
+            CONFIG_LARGE_PAGE_ALLOC_OVERRIDE = n
+            CONFIG_LARGE_PAGE_ALLOC = n
+            CONFIG_MALI_PWRSOFT_765 = n
+            CONFIG_MALI_MEMORY_FULLY_BACKED = n
+            CONFIG_MALI_JOB_DUMP = n
+            CONFIG_MALI_NO_MALI = n
+            CONFIG_MALI_REAL_HW = y
+            CONFIG_MALI_ERROR_INJECT = n
+            CONFIG_MALI_HW_ERRATA_1485982_NOT_AFFECTED = n
+            CONFIG_MALI_HW_ERRATA_1485982_USE_CLOCK_ALTERNATIVE = n
+            CONFIG_MALI_PRFCNT_SET_SELECT_VIA_DEBUG_FS = n
+            CONFIG_MALI_DEBUG = n
             CONFIG_MALI_MIDGARD_ENABLE_TRACE = n
             CONFIG_MALI_SYSTEM_TRACE = n
             CONFIG_MALI_FENCE_DEBUG = n
         endif
-    else
-        # Prevent misuse when CONFIG_MALI_EXPERT=n
-        CONFIG_MALI_CORESTACK = n
-        CONFIG_LARGE_PAGE_ALLOC_OVERRIDE = n
-        CONFIG_LARGE_PAGE_ALLOC = n
-        CONFIG_MALI_PWRSOFT_765 = n
-        CONFIG_MALI_MEMORY_FULLY_BACKED = n
-        CONFIG_MALI_JOB_DUMP = n
-        CONFIG_MALI_NO_MALI = n
-        CONFIG_MALI_REAL_HW = y
-        CONFIG_MALI_ERROR_INJECT = n
-        CONFIG_MALI_HW_ERRATA_1485982_NOT_AFFECTED = n
-        CONFIG_MALI_HW_ERRATA_1485982_USE_CLOCK_ALTERNATIVE = n
-        CONFIG_MALI_PRFCNT_SET_SELECT_VIA_DEBUG_FS = n
-        CONFIG_MALI_DEBUG = n
-        CONFIG_MALI_MIDGARD_ENABLE_TRACE = n
-        CONFIG_MALI_SYSTEM_TRACE = n
-        CONFIG_MALI_FENCE_DEBUG = n
-    endif
 
-    ifeq ($(CONFIG_MALI_DEBUG), y)
-        CONFIG_MALI_KUTF ?= y
-        ifeq ($(CONFIG_MALI_KUTF), y)
-            CONFIG_MALI_KUTF_IRQ_TEST ?= y
-            CONFIG_MALI_KUTF_CLK_RATE_TRACE ?= y
-            CONFIG_MALI_KUTF_MGM_INTEGRATION_TEST ?= y
+        ifeq ($(CONFIG_MALI_DEBUG), y)
+            CONFIG_MALI_KUTF ?= y
+            ifeq ($(CONFIG_MALI_KUTF), y)
+                CONFIG_MALI_KUTF_IRQ_TEST ?= y
+                CONFIG_MALI_KUTF_CLK_RATE_TRACE ?= y
+                CONFIG_MALI_KUTF_MGM_INTEGRATION_TEST ?= y
+                ifeq ($(CONFIG_MALI_DEVFREQ), y)
+                    ifeq ($(CONFIG_MALI_NO_MALI), y)
+                        CONFIG_MALI_KUTF_IPA_UNIT_TEST ?= y
+                    endif
+                endif
+
+            else
+                # Prevent misuse when CONFIG_MALI_KUTF=n
+                CONFIG_MALI_KUTF_IRQ_TEST = n
+                CONFIG_MALI_KUTF_CLK_RATE_TRACE = n
+                CONFIG_MALI_KUTF_MGM_INTEGRATION_TEST = n
+            endif
         else
-            # Prevent misuse when CONFIG_MALI_KUTF=n
+            # Prevent misuse when CONFIG_MALI_DEBUG=n
+            CONFIG_MALI_KUTF = n
             CONFIG_MALI_KUTF_IRQ_TEST = n
             CONFIG_MALI_KUTF_CLK_RATE_TRACE = n
             CONFIG_MALI_KUTF_MGM_INTEGRATION_TEST = n
         endif
     else
-        # Prevent misuse when CONFIG_MALI_DEBUG=n
+        # Prevent misuse when CONFIG_MALI_MIDGARD=n
+        CONFIG_MALI_ARBITRATION = n
         CONFIG_MALI_KUTF = n
         CONFIG_MALI_KUTF_IRQ_TEST = n
         CONFIG_MALI_KUTF_CLK_RATE_TRACE = n
         CONFIG_MALI_KUTF_MGM_INTEGRATION_TEST = n
     endif
-else
-    # Prevent misuse when CONFIG_MALI_MIDGARD=n
-    CONFIG_MALI_ARBITRATION = n
-    CONFIG_MALI_KUTF = n
-    CONFIG_MALI_KUTF_IRQ_TEST = n
-    CONFIG_MALI_KUTF_CLK_RATE_TRACE = n
-    CONFIG_MALI_KUTF_MGM_INTEGRATION_TEST = n
+
+    # All Mali CONFIG should be listed here
+    CONFIGS := \
+        CONFIG_MALI_MIDGARD \
+        CONFIG_MALI_CSF_SUPPORT \
+        CONFIG_MALI_GATOR_SUPPORT \
+        CONFIG_MALI_ARBITER_SUPPORT \
+        CONFIG_MALI_ARBITRATION \
+        CONFIG_MALI_PARTITION_MANAGER \
+        CONFIG_MALI_REAL_HW \
+        CONFIG_MALI_DEVFREQ \
+        CONFIG_MALI_MIDGARD_DVFS \
+        CONFIG_MALI_DMA_BUF_MAP_ON_DEMAND \
+        CONFIG_MALI_DMA_BUF_LEGACY_COMPAT \
+        CONFIG_MALI_EXPERT \
+        CONFIG_MALI_CORESTACK \
+        CONFIG_LARGE_PAGE_ALLOC_OVERRIDE \
+        CONFIG_LARGE_PAGE_ALLOC \
+        CONFIG_MALI_PWRSOFT_765 \
+        CONFIG_MALI_MEMORY_FULLY_BACKED \
+        CONFIG_MALI_JOB_DUMP \
+        CONFIG_MALI_NO_MALI \
+        CONFIG_MALI_ERROR_INJECT \
+        CONFIG_MALI_HW_ERRATA_1485982_NOT_AFFECTED \
+        CONFIG_MALI_HW_ERRATA_1485982_USE_CLOCK_ALTERNATIVE \
+        CONFIG_MALI_PRFCNT_SET_PRIMARY \
+        CONFIG_MALI_PRFCNT_SET_SECONDARY \
+        CONFIG_MALI_PRFCNT_SET_TERTIARY \
+        CONFIG_MALI_PRFCNT_SET_SELECT_VIA_DEBUG_FS \
+        CONFIG_MALI_DEBUG \
+        CONFIG_MALI_MIDGARD_ENABLE_TRACE \
+        CONFIG_MALI_SYSTEM_TRACE \
+        CONFIG_MALI_FENCE_DEBUG \
+        CONFIG_MALI_KUTF \
+        CONFIG_MALI_KUTF_IRQ_TEST \
+        CONFIG_MALI_KUTF_CLK_RATE_TRACE \
+        CONFIG_MALI_KUTF_MGM_INTEGRATION_TEST \
+        CONFIG_MALI_XEN \
+        CONFIG_MALI_CORESIGHT \
+        CONFIG_MALI_TRACE_POWER_GPU_WORK_PERIOD
+
+
 endif
-
-# All Mali CONFIG should be listed here
-CONFIGS := \
-    CONFIG_MALI_MIDGARD \
-    CONFIG_MALI_CSF_SUPPORT \
-    CONFIG_MALI_GATOR_SUPPORT \
-    CONFIG_MALI_ARBITER_SUPPORT \
-    CONFIG_MALI_ARBITRATION \
-    CONFIG_MALI_PARTITION_MANAGER \
-    CONFIG_MALI_REAL_HW \
-    CONFIG_MALI_DEVFREQ \
-    CONFIG_MALI_MIDGARD_DVFS \
-    CONFIG_MALI_DMA_BUF_MAP_ON_DEMAND \
-    CONFIG_MALI_DMA_BUF_LEGACY_COMPAT \
-    CONFIG_MALI_EXPERT \
-    CONFIG_MALI_CORESTACK \
-    CONFIG_LARGE_PAGE_ALLOC_OVERRIDE \
-    CONFIG_LARGE_PAGE_ALLOC \
-    CONFIG_MALI_PWRSOFT_765 \
-    CONFIG_MALI_MEMORY_FULLY_BACKED \
-    CONFIG_MALI_JOB_DUMP \
-    CONFIG_MALI_NO_MALI \
-    CONFIG_MALI_ERROR_INJECT \
-    CONFIG_MALI_HW_ERRATA_1485982_NOT_AFFECTED \
-    CONFIG_MALI_HW_ERRATA_1485982_USE_CLOCK_ALTERNATIVE \
-    CONFIG_MALI_PRFCNT_SET_PRIMARY \
-    CONFIG_MALI_PRFCNT_SET_SECONDARY \
-    CONFIG_MALI_PRFCNT_SET_TERTIARY \
-    CONFIG_MALI_PRFCNT_SET_SELECT_VIA_DEBUG_FS \
-    CONFIG_MALI_DEBUG \
-    CONFIG_MALI_MIDGARD_ENABLE_TRACE \
-    CONFIG_MALI_SYSTEM_TRACE \
-    CONFIG_MALI_FENCE_DEBUG \
-    CONFIG_MALI_KUTF \
-    CONFIG_MALI_KUTF_IRQ_TEST \
-    CONFIG_MALI_KUTF_CLK_RATE_TRACE \
-    CONFIG_MALI_KUTF_MGM_INTEGRATION_TEST \
-    CONFIG_MALI_XEN \
-    CONFIG_MALI_CORESIGHT
-
 
 THIS_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 -include $(THIS_DIR)/../arbitration/Makefile
@@ -198,7 +241,9 @@ MAKE_ARGS := $(foreach config,$(CONFIGS), \
                         $(value config)=$(value $(value config)), \
                         $(value config)=n))
 
-MAKE_ARGS += CONFIG_MALI_PLATFORM_NAME=$(CONFIG_MALI_PLATFORM_NAME)
+ifeq ($(MALI_KCONFIG_EXT_PREFIX),)
+    MAKE_ARGS += CONFIG_MALI_PLATFORM_NAME=$(CONFIG_MALI_PLATFORM_NAME)
+endif
 
 #
 # EXTRA_CFLAGS to define the custom CONFIGs on out-of-tree build
@@ -210,8 +255,10 @@ EXTRA_CFLAGS := $(foreach config,$(CONFIGS), \
                     $(if $(filter y m,$(value $(value config))), \
                         -D$(value config)=1))
 
-EXTRA_CFLAGS += -DCONFIG_MALI_PLATFORM_NAME=$(CONFIG_MALI_PLATFORM_NAME)
-EXTRA_CFLAGS += -DCONFIG_MALI_NO_MALI_DEFAULT_GPU='\"$(CONFIG_MALI_NO_MALI_DEFAULT_GPU)\"'
+ifeq ($(MALI_KCONFIG_EXT_PREFIX),)
+    EXTRA_CFLAGS += -DCONFIG_MALI_PLATFORM_NAME='\"$(CONFIG_MALI_PLATFORM_NAME)\"'
+    EXTRA_CFLAGS += -DCONFIG_MALI_NO_MALI_DEFAULT_GPU='\"$(CONFIG_MALI_NO_MALI_DEFAULT_GPU)\"'
+endif
 
 #
 # KBUILD_EXTRA_SYMBOLS to prevent warnings about unknown functions
@@ -272,10 +319,10 @@ ifeq ($(CONFIG_MALI_KCOV),y)
 endif
 
 all:
-	$(MAKE) -C $(KDIR) M=$(CURDIR) $(MAKE_ARGS) EXTRA_CFLAGS="$(EXTRA_CFLAGS)" KBUILD_EXTRA_SYMBOLS="$(EXTRA_SYMBOLS)" modules
+	$(MAKE) -C $(KDIR) M=$(M) $(MAKE_ARGS) EXTRA_CFLAGS="$(EXTRA_CFLAGS)" KBUILD_EXTRA_SYMBOLS="$(EXTRA_SYMBOLS)" modules
 
 modules_install:
-	$(MAKE) -C $(KDIR) M=$(CURDIR) $(MAKE_ARGS) modules_install
+	$(MAKE) -C $(KDIR) M=$(M) $(MAKE_ARGS) modules_install
 
 clean:
-	$(MAKE) -C $(KDIR) M=$(CURDIR) $(MAKE_ARGS) clean
+	$(MAKE) -C $(KDIR) M=$(M) $(MAKE_ARGS) clean
