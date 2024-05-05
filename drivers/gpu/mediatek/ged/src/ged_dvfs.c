@@ -21,7 +21,7 @@
 #include <mtk_gpu_bw.h>
 #endif
 
-#include <mt-plat/mtk_gpu_utility.h>
+#include "../../mt-plat/mtk_gpu_utility.h"
 
 #include <asm/siginfo.h>
 #include <linux/sched.h>
