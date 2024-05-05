@@ -48,6 +48,7 @@
 #include <mtk_gpu_swpm_plat.h>
 #endif
 
+#include "../../../../../../../../../misc/mediatek/base/power/include/swpm_v1/subsys/mtk_gpu_swpm_mt6853.h"
 
 /* Hwcnt reader API version */
 #define HWCNT_READER_API 1
