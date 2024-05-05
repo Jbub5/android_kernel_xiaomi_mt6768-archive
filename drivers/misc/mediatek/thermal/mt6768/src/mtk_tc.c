@@ -38,7 +38,7 @@
 #endif
 
 #include <mt-plat/mtk_wd_api.h>
-#include <mtk_gpu_utility.h>
+#include "../../../../../gpu/mediatek/mt-plat/mtk_gpu_utility.h"
 #include <linux/time.h>
 
 #define __MT_MTK_TS_CPU_C__
