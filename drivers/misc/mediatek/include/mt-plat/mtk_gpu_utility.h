@@ -105,7 +105,7 @@ typedef struct {
 	unsigned int value;
 	int overflow;
 } GPU_PMU;
-bool mtk_get_gpu_pmu_init(GPU_PMU *pmus, int pmu_size, int *ret_size);
+bool mtk_get_gpu_pmu_init(struct GPU_PMU *pmus, int pmu_size, int *ret_size);
 bool mtk_get_gpu_pmu_swapnreset(GPU_PMU *pmus, int pmu_size);
 bool mtk_get_gpu_pmu_deinit(void);
 bool mtk_get_gpu_pmu_swapnreset_stop(void);
