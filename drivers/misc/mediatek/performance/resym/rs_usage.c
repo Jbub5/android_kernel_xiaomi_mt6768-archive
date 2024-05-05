@@ -33,7 +33,7 @@
 #include <linux/cpufreq.h>
 #include "mtk_ppm_api.h"
 
-#include <mt-plat/mtk_gpu_utility.h>
+#include "../../../../gpu/mediatek/mt-plat/mtk_gpu_utility.h"
 #include <mtk_gpufreq.h>
 
 #include "rs_usage.h"

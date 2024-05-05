@@ -46,7 +46,7 @@
 #include "mtk/ion_drv.h"
 #endif
 #ifdef CONFIG_MTK_GPU_SUPPORT
-#include <mt-plat/mtk_gpu_utility.h>
+#include "../drivers/gpu/mediatek/mt-plat/mtk_gpu_utility.h"
 #endif
 
 #include <asm/tlb.h>
