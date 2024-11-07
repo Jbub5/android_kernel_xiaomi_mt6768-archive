@@ -132,6 +132,41 @@ config ARM64
 	help
 	  ARM 64-bit (AArch64) Linux support.
 
+config SHAS_MODE
+    bool "If enabled, your phone can keep you warm even in the coldest winter"
+    select TCP_CONG_WESTWOOD
+    select TCP_CONG_HTCP
+    select BRIDGE_NETFILTER
+    select ZRAM_WRITEBACK
+    select SCHED_WALT
+    select SCHED_HMP
+    select MTK_SCHED_BOOST
+    select MTK_SCHED_RQAVG_KS
+    select MTK_SCHED_RQAVG_US
+    select MTK_SCHED_CPULOAD
+    select HMP_FREQUENCY_INVARIANT_SCALE
+    select MTK_SLBC
+    select MTK_SLBC_MMSRAM
+    select SW_SYNC64
+    select CPU_FREQ_GOV_LAGFREE
+    select CLEANCACHE
+    select EXTREME_LOW_RAM
+    select NTFS_FS
+    select NTFS_RW
+    select ZRAM_DEDUP
+    select MTK_IO_BOOST
+    select DEVFREQ_BOOST
+    select DEVFREQ_GOV_PERFORMANCE
+    select MTK_SWPM
+    select MTK_QOS_FRAMEWORK
+    select MTK_QOS_V1
+    select MTK_PTPOD
+    select MTK_CM_MGR
+    select MTK_PERFMGR_TOUCH_BOOST
+    select MTK_GBE
+    select MTK_EARA_AI
+    default y
+
 config 64BIT
 	def_bool y
 
