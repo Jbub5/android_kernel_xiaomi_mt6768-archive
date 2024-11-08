@@ -74,7 +74,6 @@ static int ai_bench;
 
 static DEFINE_MUTEX(eara_lock);
 
-static struct dentry *eara_debugfs_dir;
 static int get_pwr_tbl_done;
 static void get_pwr_tbl(void);
 #define NR_FREQ_CPU 16
@@ -1392,7 +1391,6 @@ static const struct file_operations eara_pwr_tbl_fops = {
 static int __init init_eara_job(void)
 {
 	return 0;
-
 }
 
 late_initcall(init_eara_job);
