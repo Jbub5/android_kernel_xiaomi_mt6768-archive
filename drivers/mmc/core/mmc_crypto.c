@@ -113,6 +113,25 @@ static int mmc_crypto_cfg_entry_write_key(union swcqhci_crypto_cfg_entry *cfg,
 	return -EINVAL;
 }
 
+#ifdef CONFIG_MMC_CRYPTO_LEGACY
+#include <linux/namei.h>
+
+static int crypto_legacy(void) {
+	struct path path;
+	int legacy_rom;
+	int gsi;
+
+	legacy_rom = kern_path("/dev/block/mapper/system_ext", LOOKUP_FOLLOW, &path);
+	gsi = kern_path("/dev/block/mapper/product", LOOKUP_FOLLOW, &path);
+
+	if ((legacy_rom == 1) && (gsi == 0)) {
+		return 0; // Android <=12
+	} else {
+		return 1; // Android >=13
+	}
+}
+#endif
+
 static int mmc_crypto_keyslot_program(struct keyslot_manager *ksm,
 			const struct blk_crypto_key *key,
 			unsigned int slot)
@@ -147,9 +166,11 @@ static int mmc_crypto_keyslot_program(struct keyslot_manager *ksm,
 
 	cfg.data_unit_size = data_unit_mask;
 #ifdef CONFIG_MMC_CRYPTO_LEGACY
+	if (crypto_legacy() == 0) {
 	/* used fsrypt v2 in OTA fscrypt v1 environment */
 	if (key->hie_duint_size != 4096)
 		cfg.data_unit_size = 1;
+	}
 #endif
 
 	cfg.crypto_cap_idx = cap_idx;
