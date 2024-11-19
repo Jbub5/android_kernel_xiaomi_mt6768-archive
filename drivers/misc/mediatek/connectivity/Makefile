@@ -40,9 +40,9 @@ endif
     $(MODULE_NAME)-objs += common/wmt_build_in_adapter.o
 
     ifeq ($(CONFIG_WLAN_DRV_BUILD_IN),y)
-        $(info $$CONFIG_MTK_COMBO_CHIP is [${CONFIG_MTK_COMBO_CHIP}])
+        #$(info $$CONFIG_MTK_COMBO_CHIP is [${CONFIG_MTK_COMBO_CHIP}])
         MTK_PLATFORM_ID := $(patsubst CONSYS_%,%,$(subst ",,$(CONFIG_MTK_COMBO_CHIP)))
-        $(info MTK_PLATFORM_ID is [${MTK_PLATFORM_ID}])
+        #$(info MTK_PLATFORM_ID is [${MTK_PLATFORM_ID}])
 
         # for gen4m options
         export CONFIG_MTK_COMBO_WIFI_HIF=axi
