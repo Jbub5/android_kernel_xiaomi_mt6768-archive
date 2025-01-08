@@ -420,7 +420,7 @@ AFLAGS_MODULE   =
 LDFLAGS_MODULE  =
 CFLAGS_KERNEL	=
 AFLAGS_KERNEL	=
-LDFLAGS_vmlinux =
+LDFLAGS_vmlinux = --strip-debug
 
 # Use USERINCLUDE when you must reference the UAPI directories only.
 USERINCLUDE    := \
@@ -872,10 +872,10 @@ ifdef CONFIG_DEBUG_INFO
 ifdef CONFIG_DEBUG_INFO_SPLIT
 KBUILD_CFLAGS   += $(call cc-option, -gsplit-dwarf, -g)
 else
-KBUILD_CFLAGS	+= -g
+#KBUILD_CFLAGS	+= -g
 endif
 ifeq ($(LLVM_IAS),0)
-KBUILD_AFLAGS	+= -Wa,-gdwarf-2
+#KBUILD_AFLAGS	+= -Wa,-gdwarf-2
 endif
 endif
 
